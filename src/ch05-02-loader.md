@@ -59,7 +59,7 @@ Upon the conclusion of the signature check, the loader also does a quick check o
 
 Once the image has been signature checked, the loader must set up the Xous kernel. Xous has a very regular structure, where everything is a process, including the kernel. What makes the kernel special is that it is process ID `1`, and its code is also mapped into the high 4 MiB of every other processes' memory space, allowing processes to run kernel code without having to swap out the `satp` (that is, the page table base).
 
-The loader's responsibility is to go from a machine that has essentially a zero-ized RAM space and a bunch of archives in FLASH, to one where physical pages of memory are mapped into the correct virtual address spaces for every process.
+The loader's responsibility is to go from a machine that has essentially a zeroized RAM space and a bunch of archives in FLASH, to one where physical pages of memory are mapped into the correct virtual address spaces for every process.
 
 This is done in several stages:
 
@@ -76,13 +76,13 @@ The loader performs one pass through the Arguments structure to ensure that it c
 
 ### Loader Stage 1: Copying and Aligning Data
 
-Stage 1 copies and aligns all of the processes, such that the sub-page offsets for the code matches the expectations that the linker set up. It also copies any data requires write access, even if is already correctly aligned. The core routine is `copy_processes()`.
+Stage 1 copies and aligns all of the processes, such that the sub-page offsets for the code match the expectations that the linker set up. It also copies any data that requires write access, even if is already correctly aligned. The core routine is `copy_processes()`.
 
 In the case that the offsets for the memory image on FLASH line up with the virtual memory offsets, nothing needs to be done for the text, read-only data, and exception handler sections. In the case that they do not line up, a copy must be made in RAM of these sections to ensure correct alignment.
 
-Virtual sections marked as `NOCOPY` must be allocated and zero-ized, and sections marked with write access must always the copied.
+Virtual sections marked as `NOCOPY` must be allocated and zeroized, and sections marked with write access must always the copied.
 
-The loader reserves the top two pages for its own working stack space, and adds a configurable `GUARD_MEMORY_BYTES` buffer to determine the beginning of process space. Note that one page of the "guard" area is used to store a "clean supend marker", which is used by the loader to check if the current power-on cycle is due to a resume, or a cold boot.
+The loader reserves the top two pages for its own working stack space, and adds a configurable `GUARD_MEMORY_BYTES` buffer to determine the beginning of process space. Note that one page of the "guard" area is used to store a "clean suspend marker", which is used by the loader to check if the current power-on cycle is due to a resume, or a cold boot.
 
 Currently, the total works out to an offset of 16kiB reserved from top of RAM before processes are copied. These RAM pages are "lost forever" and not available to the Xous kernel for any purpose. This physical offset represents the start of the loader's workspace for setting up Xous.
 

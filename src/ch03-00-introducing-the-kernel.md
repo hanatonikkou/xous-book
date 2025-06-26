@@ -1,6 +1,6 @@
 # Introducing the Kernel
 
-Xous is a microkernel design that tries to keep as little as possible inside the main kernel. Instead, programs can start "Servers" that process can connect to in order to accomplish a task.
+Xous is a microkernel design that tries to keep as little as possible inside the main kernel. Instead, programs can start "Servers" that processes can connect to in order to accomplish a task.
 
 Processes are isolated, and therefore an MMU is strongly recommended. One process can have multiple threads, and processes cannot interact with one another except by passing Messages.
 

@@ -92,7 +92,7 @@ let kbd_mgr = xous::create_server().unwrap();
 
 - `add_item(MenuItem)` - adds the `MenuItem` specified to the end of the menu list, returning `true` to indicate success.
 - `delete_item(&str)` - deletes an item with a `name` specified as the argument. Returns `true` to indicate success.
-- `set_index(usize)` - sets the index pointer of the menu to the specified offset. Typically ued to create a "default" position for the menu before it is raised.
+- `set_index(usize)` - sets the index pointer of the menu to the specified offset. Typically used to create a "default" position for the menu before it is raised.
 - `quit()` - exit and destory the `MenuMatic` server
 
 If you don't need the above functionality, it's recommended that you do not create the server, as it consumes memory and eats up connection and server name space.

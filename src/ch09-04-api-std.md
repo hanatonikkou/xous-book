@@ -29,7 +29,7 @@ The example above shows the process of creating, reading from, and deleting a fi
 
 The main difference from a Unix-like or Windows interface is that the path separator on Xous is `:`.
 
-At this time, PDDB has no restrictions on dict or key names, meaning it's possible to create a key with a `:` in the name. The standard library functions won't be able to disambiguate these paths at this time, and so this character will likely be made illegal in key names. This is somewhat remeniscent of the Windows Registry where \ is a path separator that is illegal in path names yet is allowed in key names.
+At this time, PDDB has no restrictions on dict or key names, meaning it's possible to create a key with a `:` in the name. The standard library functions won't be able to disambiguate these paths at this time, and so this character will likely be made illegal in key names. This is somewhat reminiscent of the Windows Registry where \ is a path separator that is illegal in path names yet is allowed in key names.
 
 ## Path Conventions
 

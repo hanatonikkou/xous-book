@@ -30,9 +30,9 @@ let modals = modals::Modals::new(&xns).unwrap();
 modals.show_notification("This is a test!").expect("notification failed");
 ```
 
-This will pop up a notification that says "This is a test!". Execution blocks at this line until the user pressses any key to acknowledge the notification.
+This will pop up a notification that says "This is a test!". Execution blocks at this line until the user presses any key to acknowledge the notification.
 
-## Progress bar
+## Progress Bar
 
 One can create a progress bar using the `start_progress()` method, with the following parameters:
 - `name`: A `&str` that is the title of the progress bar
@@ -73,7 +73,7 @@ The API is similar to that of the Progress Bar, in that there are start, update,
 and close phases:
 
 - To pop up the dynamic notification, use the `dynamic_notification(title: Option<&str>, text: Option<&str>)`
-method. The both `title` and `text` are optional, but at least one is recommended, otherwise
+method. Both `title` and `text` are optional, but at least one is recommended, otherwise
 you get an empty notification.
 - Updates to the notification are done using `dynamic_notification_update(title: Option<&str>, text: Option<&str>)`.
 Arguments that are `None` do not update, and show the same text as before.
@@ -81,7 +81,7 @@ Arguments that are `None` do not update, and show the same text as before.
 dialog with `dynamic_notification_close()`.
 
 
-## Text entry
+## Text Entry
 One can request text entry using the `get_text()` method. This takes the following parameters:
 
 - `prompt`: A `&str` that is the prompt to the user

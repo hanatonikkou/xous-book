@@ -8,7 +8,7 @@ Therefore, all complex operations from building the kernel to constructing an ou
 
 ## Building Images
 
-Generally, users will want to use `cargo xtask app-image [app 1] [app ..]` to build a Xous image that contains the desired list of applications. The applications are the names of crates contained in the "apps/" directory. Tesulting FLASH images will be called [`loader.bin`](ch05-02-loader.md) and `xous.img` in the `target/riscv32imac-unknown-xous-elf/release` directory.
+Generally, users will want to use `cargo xtask app-image [app 1] [app ..]` to build a Xous image that contains the desired list of applications. The applications are the names of crates contained in the "apps/" directory. Resulting FLASH images will be called [`loader.bin`](ch05-02-loader.md) and `xous.img` in the `target/riscv32imac-unknown-xous-elf/release` directory.
 
 There are also convenience commands to build emulation images, such as `cargo xtask run` (for hosted mode, where Xous runs directly on your native OS) and `cargo xtask renode-image` (for a Renode image, where a cycle accurate simulation can be run inside the Renode emulator). See Chapter 4 for more information about Renode.
 
@@ -30,14 +30,14 @@ After `xtask`, a `verb` will select one of several pre-configured sets of packag
 The binary images merged into a FLASH image is usually built from local source, but it can actually come from many locations. Thus each `cratespec` has the following syntax:
 - `name`: crate 'name' to be built from local source
 - `name@version`: crate 'name' to be fetched from crates.io at the specified version
-- `name#URL`: pre-built binary crate of 'name', to be downloadeded from a server at 'URL' after the `#` separator
+- `name#URL`: pre-built binary crate of 'name', to be downloaed from a server at 'URL' after the `#` separator
 - `path-to-binary`: file path to a prebuilt binary image on local machine. Files in '.' must be specified as `./file` to avoid confusion with local source
 
-The exact meaning of a `cratespec` depends on the context of the verb. Generally, fully-configured builds interpret the `cratespec` as an `app`, and debug builds interpcet `cratepsec` as a `service`.
+The exact meaning of a `cratespec` depends on the context of the verb. Generally, fully-configured builds interpret the `cratespec` as an `app`, and debug builds interpret `cratespec` as a `service`.
 
 Both an `app` and a `service` are Xous binaries that are copied into the final disk image; however, there is an additional step that gets run in the build system for an `app` that looks up its description in `apps/manifest.json` and attempts to configure the launch menu for the app prior to running the build.
 
-Additional crates can be merged in with explicit app/service treatment by preceeding the crate name with either an `--app` flag or `---service` flag.
+Additional crates can be merged in with explicit app/service treatment by preceeding the crate name with either an `--app` flag or `--service` flag.
 
 #### Example: Building a Precursor User Image
 

@@ -118,4 +118,4 @@ To switch threads, use `thr [n]`:
 (gdb)
 ```
 
-**Important Note**: GDB thread numbers are different from Xous thread numbers! GDB Always starts with `1`, but Xous may have any number of threads running. GDB pays attention to the first column, and you are most likely interested in the second column.
+**Important Note**: GDB thread numbers are different from Xous thread numbers! GDB always starts with `1`, but Xous may have any number of threads running. GDB pays attention to the first column, and you are most likely interested in the second column.

@@ -46,7 +46,7 @@ to transform *inter-process* messages and buffers into types (note that this doe
 not include methods that receive, for example, arbitrary messages over network).
 
 A simple `.unwrap()` is probably sufficient to check the results of most infalliable operations,
-because the panic handler will print a panic on that line
+because the panic handler will print a panic on that line.
 
 `unwrap()` may even be preferable to a `.expect("helpful error message")` in most
 cases, because "helpful error message" takes memory to store, increases the

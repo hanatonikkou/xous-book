@@ -1,6 +1,6 @@
 # Backups
 
-Users can make backups of the PDDB, and restore it to the same or new device, by following the [instructions on the wiki](https://github.com/betrusted-io/betrusted-wiki/wiki/Backups).
+Users can make backups of the PDDB, and restore it to the same or a new device, by following the [instructions on the wiki](https://github.com/betrusted-io/betrusted-wiki/wiki/Backups).
 
 ## Analysis
 

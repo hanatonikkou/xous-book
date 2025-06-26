@@ -10,7 +10,7 @@ A Server is a messaging construct, whereas threads refer to execution flow. You 
 
 Threads in Xous are conventional: just a PC + stack that runs in a given process space. A single process can have up to 32 threads, and each thread will run until their time slice is up; or they yield their time slice by either explicitly yielding, or blocking on something (such as a blocking message).
 
-Blocking messages dovetails into the concept of servers: in Xous, server is basically just a 128-bit ID number that servers as a mailbox for incoming messages. There is a limit of 128 servers in Xous across all processes and threads. Within that limit, one can allocate all the servers they want for a given thread, although it's not terribly useful to do that.
+Blocking messages dovetails into the concept of servers: in Xous, a server is basically just a 128-bit ID number that servers as a mailbox for incoming messages. There is a limit of 128 servers in Xous across all processes and threads. Within that limit, one can allocate all the servers they want for a given thread, although it's not terribly useful to do that.
 
 Messages specify a 128-bit server ID as a recipient; and, the typical idiom (although it doesn't have to be this way) is for a thread to wake up, initialize, allocate a server ID, and then wait for a message to arrive in its inbox.
 
@@ -80,8 +80,8 @@ xous::send_message(conn,
 
 The above `send_message()` would yield the remaining quantum of time for the parent thread, and dispatch into the child thread. The child would receive the message, do "something useful" and return a value to the caller. Assuming there was still time left in the quantum, this `return_scalar` would return execution back to the parent thread!
 
-If the message was not blocking, the parent thread would continue executing until its quantum is completed, and then the child thread would handle the message only then. Assuming the child  thread can handle the response very quickly, it would yield the remainder of its quantum once it completed doing "something useful" and it returned to the top of its loop where it calls `receive_message()`, and found its input queue to be empty.
+If the message was not blocking, the parent thread would continue executing until its quantum is completed, and the child thread would handle the message only then. Assuming the child  thread can handle the response very quickly, it would yield the remainder of its quantum once it completed doing "something useful" and it returned to the top of its loop where it calls `receive_message()`, and found its input queue to be empty.
 
-Thus, Xous is carefully coded such that everything blocks if it's not being used, using the idiom above. Crates like `crossbeam` are implemented using `condvar` which intenally uses servers and messages to ensure that blocking waits are efficient.
+Thus, Xous is carefully coded such that everything blocks if it's not being used, using the idiom above. Crates like `crossbeam` are implemented using `condvar` which internally uses servers and messages to ensure that blocking waits are efficient.
 
 So, in general, if the CPU load bar is pegged to 100% and nothing is "going on" (perhaps just a spin-wait), it's considered a bug.

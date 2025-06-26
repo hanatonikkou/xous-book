@@ -19,7 +19,7 @@ Before diving in, it is helpful to review the [messaging architecture](ch07-00-m
 
 Each server consists at its core of an event loop. While event loops are allowed to be non-blocking, this is an edge case and in general all event loops are blocking: when an event loop blocks, it is de-scheduled and consumes zero CPU resources, allowing us to stop the CPU clock and save power.
 
-An incoming message will wake up the process, at which point the process shall decode and process the message. From here, the process may issue messages to other servers. Memory `send` and Scalar `scalar` messages will not stop the execution flow; the outgoing messages are simply placed in the destination queue and life goes on. However, blocking message types `lend`, `lend_mut`, and `blocking_scalar` will cause the message to be placed in the destination queue, and the current thread yields the remainder of its quanta to the destination thread. The blocked thread will remain stopped at that point of execution until the blocking message types are "returned". At this point the blocked thread is re-queued for execution. Execution will resume either on a time-based pre-emption boundary, or possibly earlier if the returning process completes its task before its quanta is up and enters a blocking state (that is, waiting on a new incoming message, or a response to a new outgoing blocking message).
+An incoming message will wake up the process, at which point the process shall decode and process the message. From here, the process may issue messages to other servers. Memory `send` and Scalar `scalar` messages will not stop the execution flow; the outgoing messages are simply placed in the destination queue and life goes on. However, blocking message types `lend`, `lend_mut`, and `blocking_scalar` will cause the message to be placed in the destination queue, and the current thread yields the remainder of its quantum to the destination thread. The blocked thread will remain stopped at that point of execution until the blocking message types are "returned". At this point the blocked thread is re-queued for execution. Execution will resume either on a time-based pre-emption boundary, or possibly earlier if the returning process completes its task before its quantum is up and enters a blocking state (that is, waiting on a new incoming message, or a response to a new outgoing blocking message).
 
 ⚡ Key Concept ⚡
 
@@ -29,7 +29,7 @@ Memory messages implicitly return to callers on `Drop`. Thus, there is no explic
 - Deferred-response is implemented by binding the current message to an `Option<MessageEnvelope>` type that is external to the main event loop.
    - By sticking the message into a `Some()`, the message is not allowed to go out of scope, the `Drop` is never called, and thus the caller blocks.
    - However, the callee is free to continue on with its processing.
-   - A return is triggered by calling `take()` on the enclosing `Option`. This moves the message out of the `Option` and into the current scope, where the message can now be modified with a return value. Once that operation ends, the message goes out of scope, `Drop` is called, and likewise, data is returned to the caller
+   - A return is triggered by calling `take()` on the enclosing `Option`. This moves the message out of the `Option` and into the current scope, where the message can now be modified with a return value. Once that operation ends, the message goes out of scope, `Drop` is called, and likewise, data is returned to the caller.
 
 ⚠️ IPC Interoperability ⚠️
 
@@ -42,7 +42,7 @@ For maximum compatibility, the recommendation is to restrict all IPC implementat
 With this overview, we can now give an example of each of the four types of messages. In general, we assume that services are organized into at least three files:
 
 - `lib.rs` -- the caller-side API that formats native Rust data into IPC messages
-- `main.rs` the server-side API that unpacks IPC messages and acts on them
+- `main.rs` -- the server-side API that unpacks IPC messages and acts on them
 - `api.rs` -- data structures & definitions shared between caller and callee
 
 Note that none of these are mandatory -- for example, a pure client-side library like our AES implementation has only a `lib.rs`; and, an application that offers no services and has only a main function would have only a `main.rs`.

@@ -102,7 +102,7 @@ pub struct CompoundData {
     pub description: xous_ipc::String::<128>,
 }
 /// For a memory structure to be remapped between processes, it must be page-aligned,
-/// and the mapped region will always round up to the neareest page boundary.
+/// and the mapped region will always round up to the nearest page boundary.
 ///
 /// Therefore, the minimum size serialized is always one page (4096 bytes). Even if
 /// we made this smaller, a full 4096 bytes are always allocated and cleared.
@@ -224,7 +224,7 @@ fn xmain() -> ! {
                 data.data[0] = 42;
                 // Note that you can stick *any* `rkyv`-derived struct
                 // into the buffer as a return "value". We just happen to re-use
-                // the same structure defintion here for expedience
+                // the same structure definition here for expedience.
                 // However, it's up to the recipient to know the returned type,
                 // and to deserialize it correctly. Nothing prevents type mismatches
                 // across IPC boundaries!

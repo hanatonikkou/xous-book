@@ -141,7 +141,7 @@ The SPT has the same structure as system page tables. However, SPT entries are o
 
 #### INIF handling
 
-Regions marked as `xip` (i.e, marked as `inif` type) are assumed to FLASH that is contained within the secure perimeter of the microcontroller. These regions are mapped directly and unencrypted into the kernel memory space.
+Regions marked as `xip` (i.e, marked as `inif` type) are assumed to be FLASH that is contained within the secure perimeter of the microcontroller. These regions are mapped directly and unencrypted into the kernel memory space.
 
 These boot-critical processes must be `xip`, and are never swapped out:
 
@@ -149,7 +149,7 @@ These boot-critical processes must be `xip`, and are never swapped out:
 - swapper
 - ticktimer
 
-More regions can be marked as `xip`; this is preferable, because if the code is resident in on-chip FLASH, they aren't taking up working-set RAM and things will run faster.
+More regions can be marked as `xip`; this is preferable, because if the code is resident in on-chip FLASH, it isn't taking up working-set RAM and things will run faster.
 
 The initial data set of `inif` processes are considered to be `wired`; however, their reserved memory regions can be swapped after allocation.
 
@@ -159,9 +159,9 @@ Regions marked as `inie` are copied to the working set RAM and executed out of R
 
 #### INIS handling
 
-Regions marked as `inis` are copied into encrypted swap on boot. The kernel page table state start out with the correct `R`/`W`/`X`/`U` values, but `V` is not set, and `P` is set. Entries are created in the SPT to inform the tracker where to find the pages.
+Regions marked as `inis` are copied into encrypted swap on boot. The kernel page table state starts out with the correct `R`/`W`/`X`/`U` values, but `V` is not set, and `P` is set. Entries are created in the SPT to inform the tracker where to find the pages.
 
-An kernel argument of type `swap` is provided, which is a base and bounds to the SPT/SMT region. This is meant to passed to the `swapper` process when it registers to the kernel.
+An kernel argument of type `swap` is provided, which is a base and bounds to the SPT/SMT region. This is meant to be passed to the `swapper` process when it registers to the kernel.
 
 The image creation routine and kernel arguments need to be extended to support `inis` regions located in off-chip SPI FLASH. The off-chip data is not encrypted, but it is signature checked with a dedicated signature block. Note that the off-chip SPI FLASH does not need to be memory mapped: the loader may read the memory through a register interface.
 
@@ -183,7 +183,7 @@ The general flow of swap handling is as follows:
 - The userspace swapper handler is registered. This must happen as early in the boot process as possible.
 - An event generates a swap exception. Sources of events include page faults on a swappable page, out of memory, and garbage collection events.
 - Events from within the kernel must issue a `swap_reentrant_syscall()` call, instead of a regular syscall.
-- The swapper handles the events, and returns
+- The swapper handles the events, and returns.
 
 #### `swap_reentrant_syscall`
 
@@ -195,7 +195,7 @@ Xous has an "exception handler" context for system calls. It is not set up for n
 
 While the former strategy sounds elegant, it would require patching every syscall path with something that reads a piece of state to determine which level of the nesting stack you're on. In particular, the assembly stub that is responsible for setting up the exceptions would need to be reworked to do this. This was deemed to be more invasive and more bug-prone than the alternative.
 
-So, in this implementation, `swap_reentrant_sycall` has an assembly stub which runs just before entering a re-entrant syscall, and also just after. The routine reads the current stack pointer, copies the exception handler entire stack to a backup location, does the syscall, and then on return, restores the stack's contents. This minimizes code changes to other code paths (reducing analytical complexity) in exchange for an operation that is extremely risky but analytically tractable.
+So, in this implementation, `swap_reentrant_sycall` has an assembly stub which runs just before entering a re-entrant syscall, and also just after. The routine reads the current stack pointer, copies the exception handler's entire stack to a backup location, does the syscall, and then on return, restores the stack's contents. This minimizes code changes to other code paths (reducing analytical complexity) in exchange for an operation that is extremely risky but analytically tractable.
 
 #### RegisterSwapper Syscall
 
@@ -210,7 +210,7 @@ All communications between the kernel and the swapper happen through the `handle
 
 #### SwapOp Syscall
 
-The `SwapOp` syscall that encodes a private ABI between the swapper and the kernel. The idea is that this ABI can rapidly evolve without having to update the syscall table, which would require an update to the Xous package itself. The `SwapOp` syscall has arguments consisting of the op itself, which is coded as the numerical representation of `SwapAbi` (below), and up to 6 generic `usize` arguments that have a meaning depending on the `SwapAbi` code.
+The `SwapOp` syscall encodes a private ABI between the swapper and the kernel. The idea is that this ABI can rapidly evolve without having to update the syscall table, which would require an update to the Xous package itself. The `SwapOp` syscall has arguments consisting of the op itself, which is coded as the numerical representation of `SwapAbi` (below), and up to 6 generic `usize` arguments that have a meaning depending on the `SwapAbi` code.
 
 The `SwapAbi` may change rapidly, so please refer to the code for the latest details, but below gives you an idea of what is inside the ABI.
 

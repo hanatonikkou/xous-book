@@ -65,7 +65,7 @@ This compiles down to a very efficient program that can be used to load a larger
 
 ### Limitations of Created Processes
 
-**NOTE:** The following is subject to fixes in the kernel, and do not currently apply. This information is presented here in order to explain oddities observed when these features are implemented.
+**NOTE:** The following is subject to fixes in the kernel, and does not currently apply. This information is presented here in order to explain oddities observed when these features are implemented.
 
 Newly-created processes cannot create servers with a predefined Server ID. They can only create randomized servers.
 

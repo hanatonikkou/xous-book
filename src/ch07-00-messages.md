@@ -6,7 +6,7 @@ Messages form the basis of interprocess communication on Xous. A process exists 
 
 ## Connecting to and Disconnecting from Servers
 
-To connect to a server you must supply it an `Server ID`. A `Server ID` is a 16-byte value of some sort that is shared in a universal namespace. If you know a Server's `Server ID` then you can connect to that Server.
+To connect to a server you must supply it a `Server ID`. A `Server ID` is a 16-byte value of some sort that is shared in a universal namespace. If you know a Server's `Server ID` then you can connect to that Server.
 
 There are a few well-known `Server ID`s. These include bare minimum IDs that are required by any process to do anything useful. They are:
 
@@ -30,7 +30,7 @@ If you call `xous::connect()` twice with the same `Server ID`, then you will get
 
 ## Disconnecting
 
-To disconnect from a server, call `unsafe { xous::disconnect(connection_id)};`. This function is `unsafe` because you can copy connection IDs, so it is up to you to ensure that they are no longer in use when disconnecting.
+To disconnect from a server, call `unsafe { xous::disconnect(connection_id) };`. This function is `unsafe` because you can copy connection IDs, so it is up to you to ensure that they are no longer in use when disconnecting.
 
 For example, if you `connect()` to a Server and spawn a thread with that connection ID, you should only call `disconnect()` once that thread has finished with the connection. Similarly, if you `Copy` the connection ID to the thread, you must make sure that **both** uses of the Connection ID are destroyed prior to disposing of the connection.
 

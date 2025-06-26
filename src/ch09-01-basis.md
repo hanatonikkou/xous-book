@@ -34,13 +34,13 @@ This quality of indistinguishability from free space is the source of plausible 
 
 The simplified diagram above would require a user to scan every page of storage and trial-decrypt each page to discover the full extent of user data. It also lacks an index to track what data goes where.
 
-These two problems are solved by using a classic "page table" mechanism to map Basis data onto the actual storage array. The virtual memory space of any given Basis is 64 bits, with pages that are 4064 bytes long (this is 4096 physical bytes less a per-page overhead for AEC-GCM-SIV + journaling)
+These two problems are solved by using a classic "page table" mechanism to map Basis data onto the actual storage array. The virtual memory space of any given Basis is 64 bits, with pages that are 4064 bytes long (this is 4096 physical bytes less a per-page overhead for AEC-GCM-SIV + journaling).
 
 The page table itself consists of entries that are 128-bits long (sized to match the length of an AES block), that are encrypted with AES-ECB.
 
 ![details of the PDDB implementation](images/pddb-details.png)
 
-Each page table entry is encodes the following data:
+Each page table entry encodes the following data:
 
 - 52-bit virtual page number of the physical page corresponding to the offset of the page table, stored as a 56-bit zero-padded field.
 - 8 bits of flags
@@ -101,11 +101,12 @@ Here are some of the assumptions that went into designing the PDDB:
 
   - Most mutability happens on the data keys themselves (keys are read/write/modify routinely).
   - Dictionary modifications (key addition or removal) are about 20x less frequent than key mods.
-  - Basis modifications (creation/removal of dictionaries) is about 10x less frequent than dictionary .
-  - According to https://www.pdl.cmu.edu/PDL-FTP/HECStorage/Yifan_Final.pdf, 0.01% of files (1 in 10,
-    require a name over 100 bytes long; 0.1% require longer than 64 bytes. There longest filename tified
-    was 143 bytes long. Study surveys ~14M files on the LANL network.
-  - Same study says 99.9% of directories have under 1k files, 99.999% under 10k
+  - Basis modifications (creation/removal of dictionaries) are about 10x less frequent than dictionary mods.
+  - [This study](https://www.pdl.cmu.edu/PDL-FTP/HECStorage/Yifan_Final.pdf) surveys >250M files in
+    22 file systems in use at LANL and PDL (table 1). For most file systems in LANL, 0.01% of names
+    require over 60 bytes, while in PDL file systems, ~0.1% of names are longer than 100 bytes (figure 13).
+    The longest filename identified was 143 bytes long.
+  - The same study says that 99.9% of directories have under 1k files and 99.999% under 10k files (figure 15).
 
 
 ### Basis Virtual Memory Layout
@@ -150,14 +151,17 @@ Small keys are kept in `VPAGE`-sized pools of data, and compacted together in RA
 implementation simply keeps all small keys in a `HashMap` in RAM, and when it comes time to sync them
 to disk, they are sorted by update count, and written to disk in ascending order.
 
-Medium keys have a TBD implementation, and are currently directed to the large pool for now.
+Medium keys have a TBD implementation, and are directed to the large pool for now.
 
 ### Size Limits
 
-The biggest key the PDDB can handle, at least in this version, 32GiB. No, this is not
+The biggest key the PDDB can handle, at least in this version, is 32GiB. No, this is not
 web scale, but it's big enough to hold a typical blu-ray movie as a single key.
 
-One can adjust this constant up or down, and the trade-off is, you get more or less total number of large keys allocated over the life of the filesystem. This is because we simply "increment a pointer" when a new large key is added to create the next virtual memory spot for the large file, meaning each key get allocated a full 32GiB of virtual memory space for it to grow into.
+You can adjust this constant up or down, trading off the maximum key size against the total possible
+number of large keys allocated over the lifetime of the filesystem. This is because we simply "increment
+a pointer" when a new large key is added to create the next virtual memory spot for the large file,
+meaning each key gets allocated a full 32GiB of virtual memory space for it to grow into.
 
 At 32GiB, you can create a lifetime total of about 200 million keys (this includes keys you've previously deleted, until we create a mechanism for sweeping through the memory space and tracking de-allocations).
 
@@ -184,7 +188,7 @@ you access to the full 32GiB file size limit.
 
 The PDDB retains in RAM a page table for every Basis. There are about 25,000 potential pages on a Precursor device, and there are no duplicate pages between Bases; thus, it's estimated that the page table structure may take about 500kiB of space at its largest.
 
-In addition to the page tables, the PDDB agressively caches all "small" keys. The current implementation assumes that any small key is always "hot" in cache, and the disk is just a write-through backing store in case power is lost. In practice, the heap size limit of the PDDB server is about 2MiB, so, the system should crash if one starts to push around a megabyte total of small key data. That's about 256 exactly 4k-sized keys, but typically small keys are very small, about 32 bytes, so the practical limit is probably closer to 10k-20k 32-byte keys.
+In addition to the page tables, the PDDB agressively caches all "small" keys. The current implementation assumes that any small key is always "hot" in cache, and the disk is just a write-through backing store in case power is lost. In practice, the heap size limit of the PDDB server is about 2MiB, so the system should crash if one starts to push around a megabyte total of small key data. That's about 256 exactly 4k-sized keys, but typically small keys are very small, about 32 bytes, so the practical limit is probably closer to 10k-20k 32-byte keys.
 
 Large keys consume about one 4k-page per key, regardless of the key size. Large keys only retrieve their data when requested, and will keep only the most recently accessed page in RAM, regardless of the size of the large key. Thus one could store a several-megabyte file in a large key, and not worry about blowing out the cache.
 
@@ -194,17 +198,17 @@ The caching mechanism can be improved down the road, but, at the moment for an a
 
 ### The "Make Before Break" (MBBB) Structure
 
-In order to protect against data loss in case of an untimely power outage, several pages of FLASH is devoted to the "make before break" feature. The core problem is that a single erase page of the page table contains records for 256 page table entres. If there is a power outage while updating one of the entries, all of the other 255 entries are also lost.
+In order to protect against data loss in case of an untimely power outage, several pages of FLASH are devoted to the "make before break" feature. The core problem is that a single page of the page table contains records for 256 page table entries. If there is a power outage while updating one of the entries, all of the other 255 entries are also lost.
 
 Thus, the MBBB mechanism creates a shadow area where the page table page being updated can be copied, prior to erasing it.
 
 Initially, the MBBB area is blank (all `FF`'s). When a page table entry needs to be updated, the whole page containing the entry is copied to a random sector in the MBBB (the randomness is for wear-levelling, not security) *with* the changes applied, and then the page containing the page table entry is erased.
 
-When the next page table entry needs to be updated, the MBBB page table image is then written to the blank slot in the page table, and the process repeats.
+When the next page table entry needs to be updated, the MBBB page table image is written to the blank slot in the page table, and the process repeats.
 
 There is no mechanism to record where the MBBB page is:
 - The MBBB area is only consulted if a blank page is found in the page table
-- "Blankness" of an area is determined by only consulting the first 16 bytes and checking if they are 0xFF. If it is, the entire page is considered blank.
+- "Blankness" of an area is determined by only consulting the first 16 bytes and checking if they are 0xFF. If they are, the entire page is considered blank.
 - The MBBB area may only contain 0 or 1 backup pages. Thus, when it is consulted, the algorithm searches for the first non-blank page and uses that as the MBBB page.
 
 ## Free Space
@@ -217,7 +221,7 @@ Thus, the situation for free space in the PDDB looks a bit like the schematic sh
 
 ![schematic of free space handling in the PDDB](images/pddb-freespace.png)
 
-An adversary can thus query the FSCB and know that, for example, a device may currently have about 7% of the total capacity marked as free space. However, they cannot say for sure that this means that the device is 93% full -- it could be that the device is brand new and has nothing allocated, but the free space has just hit the limit of the FSCB capacity. Or it could be any number of intermediate states in between: it would be hard to prove beyond a reasonable doubt the exact state of disk usage.
+An adversary can thus query the FSCB and know that, for example, a device may currently have about 7% of the total capacity marked as free space. However, they cannot say for sure that this means that the device is 93% full -- it could be that the device is brand new and has nothing allocated, but the free space has just hit the limit of the FSCB capacity. Or it could be any number of states in between: it would be hard to prove beyond a reasonable doubt the exact state of disk usage.
 
 In the case that the FSCB is exhausted, the user is greeted with a prompt that warns them that the FSCB has been exhausted, and in order to proceed without data loss, every secret Basis must be enumerated (that is, its name and password must be presented to unlock it; the distinction between enumeration and unlocking is that enumeration simply counts the pages used, without attempting to mount any filesystem structures). A user can bail out of enumeration, causing the operation that triggered the FSCB refill to fail with an out-of-memory error. Likewise, failure to present a secret Basis at this point could result in its data being pulled into the FSCB, and ultimately being deleted.
 
@@ -234,14 +238,14 @@ The solution to this is to use blank sectors in the FSCB -- which *are* kept as 
 The three types of records (`0xFF` empty space, `FastSpace` and `SpaceUpdate`) are differentiated by examining the first 32 bytes of a page:
 
 - If bytes 0-31 are `0xFF`, the entire page must be blank (empty space)
-- If any of bytes 0-15 are not 0xFF, the page must be the start of a `FastSpace` master record. The master record itself may span mulitple pages but it must be consecutive pages from its start.
+- If any of bytes 0-15 are not 0xFF, the page must be the start of a `FastSpace` master record. The master record itself may span multiple pages but it must be consecutive pages from its start.
 - If all bytes of 0-15 are 0xFF, **and** any bytes of 16-31 are not 0xFF, then the page marks the start of `SpaceUpdate` records. A `SpaceUpdate` record is similar to that of a page table entry, but with the flags set differently to indicate the life cycle of that space, and a larger `u64` nonce. From that page until the end of the `FastSpace` area, `SpaceUpdate` records may be written.
 
 The `SpaceUpdate` records are interpreted sequentially, from the lowest address to the highest address encountered. The latest record takes precedence. Thus, a single page could be allocated, de-allocated, and re-allocated in sequence, and the last re-allocation is the ultimate record that affects the net FSCB.
 
 When the `SpaceUpdate` record fills up the FSCB area (or it bumps into the existing FSCB), the records are automatically compacted; the FSCB is reduced by any allocated space at that time, the `SpaceUpdate` area is cleared, and a new random location is picked for the FSCB to wear-level the FSCB area. This all happens without user intervention or awareness, except for the fact that the operation which triggered the flush might take a bit longer than usual (about an extra 0.3s).
 
-Note that the `SpaceUpdate` journal by definition leaks information about the most recent few hundred block allocations, so in the event that the unlock PIN is compromised, it could represent a significant loss of deniability. In order to counter this, a user can manually run `pddb flush` at any time compact the `SpaceUpdate` records and effectively delete the journal. Note that this doesn't require enumerating any Bases, because this only clears a journal of operations on known free space, and it also does not attempt to allocate any new free space.
+Note that the `SpaceUpdate` journal by definition leaks information about the most recent few hundred block allocations, so in the event that the unlock PIN is compromised, it could represent a significant loss of deniability. In order to counter this, a user can manually run `pddb flush` at any time to compact the `SpaceUpdate` records and effectively delete the journal. Note that this doesn't require enumerating any Bases, because this only clears a journal of operations on known free space, and it also does not attempt to allocate any new free space.
 
 Note: the hotfix for v0.9.9 incorporates a call to flush the journal once every 24 hours of uptime automatically. The call should be safe to run asynchronously since the FSCB state is independent of filesystem state.
 
